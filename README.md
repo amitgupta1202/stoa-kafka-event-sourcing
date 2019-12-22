@@ -1,0 +1,1 @@
+# stoa-kafka-event-sourcing
