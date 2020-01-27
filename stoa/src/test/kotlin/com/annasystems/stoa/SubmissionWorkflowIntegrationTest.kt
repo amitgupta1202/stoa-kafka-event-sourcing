@@ -59,7 +59,11 @@ class SubmissionWorkflowIntegrationTest : Logging {
 		@BeforeAll
 		@JvmStatic
 		fun beforeAll() {
-			App.start()
+			checkKafkaConnection().map {
+				checkHttpServerIsRunning().mapLeft {
+					App.start()
+				}
+			}
 		}
 	}
 }

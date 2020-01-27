@@ -4,18 +4,16 @@ import arrow.core.Either
 import arrow.core.Option
 import arrow.core.extensions.set.foldable.exists
 import arrow.core.getOrElse
-import com.annasystems.stoa.common.Configs
+import com.annasystems.stoa.common.*
 import com.annasystems.stoa.common.Utils.createProducer
-import com.annasystems.stoa.common.EmailAddress
-import com.annasystems.stoa.common.Name
-import com.annasystems.stoa.common.RequestId
-import com.annasystems.stoa.common.Version
+import com.annasystems.stoa.submission.*
 import com.annasystems.stoa.submission.dao.SubmissionDao
 import com.annasystems.stoa.submission.dao.SubmissionDao.Companion.SubmissionRecord
-import com.annasystems.stoa.submission.*
 import com.annasystems.stoa.user.*
 import com.annasystems.stoa.user.dao.UserDao
+import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.streams.StreamsConfig
 import org.awaitility.Awaitility
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -55,7 +53,8 @@ internal data class TestUsers(
 
 internal fun createAuthor(): User.Author {
 	val authorId = UUID.randomUUID().toAuthorId()
-	val author = User.Author(authorId, Version.INITIAL,
+	val author = User.Author(
+		authorId, Version.INITIAL,
 		Name("DanielTheAuthor", "Jones"),
 		EmailAddress("DanielTheAuthor@email.com")
 	)
@@ -73,7 +72,8 @@ internal fun createAuthor(): User.Author {
 
 internal fun createEditor(): User.Editor {
 	val editorId = UUID.randomUUID().toEditorId()
-	val editor = User.Editor(editorId, Version.INITIAL,
+	val editor = User.Editor(
+		editorId, Version.INITIAL,
 		Name("BenTheEditor", "Gillies"),
 		EmailAddress("BenTheEditor@email.com")
 	)
@@ -91,7 +91,8 @@ internal fun createEditor(): User.Editor {
 
 internal fun createReviewer(): User.Reviewer {
 	val reviewerId = UUID.randomUUID().toReviewerId()
-	val reviewer = User.Reviewer(reviewerId, Version.INITIAL,
+	val reviewer = User.Reviewer(
+		reviewerId, Version.INITIAL,
 		Name("PaulTheReviewer", "Mac"),
 		EmailAddress("PaulTheReviewer@email.com")
 	)
@@ -109,7 +110,8 @@ internal fun createReviewer(): User.Reviewer {
 
 internal fun createEditorialAssistant(): User.EditorialAssistant {
 	val editorialAssistantId = UUID.randomUUID().toEditorialAssistantId()
-	val editorialAssistant = User.EditorialAssistant(editorialAssistantId, Version.INITIAL,
+	val editorialAssistant = User.EditorialAssistant(
+		editorialAssistantId, Version.INITIAL,
 		Name("JulianTheEditorialAssistant", "Hamilton"),
 		EmailAddress("JulianTheEditorialAssistant@email.com")
 	)
@@ -296,8 +298,23 @@ internal fun fetchSubmissionHistory(submissionId: SubmissionId): List<Submission
 }
 
 object CommandSent
+
 internal fun sendCommand(cmd: SubmissionCommand): CommandSent {
 	val json = Configs.Serialization.json.stringify(SubmissionCommand.serializer(), cmd)
 	client(Request(Method.POST, "http://localhost:9000/submissions/async").body(json))
 	return CommandSent
 }
+
+internal fun checkKafkaConnection(): Either<ApplicationError, Unit> = doTry {
+	val props = Properties()
+	props[StreamsConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+	props["group.id"] = "check-kafka-connection"
+	props["key.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
+	props["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
+	val simpleConsumer = KafkaConsumer<String, String>(props)
+	simpleConsumer.listTopics()
+}.map { Unit }
+
+internal fun checkHttpServerIsRunning(): Either<ApplicationError, Unit> = doTry {
+	fetchAllSubmissions()
+}.map { Unit }
