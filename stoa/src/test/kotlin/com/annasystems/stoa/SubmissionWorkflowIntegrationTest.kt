@@ -13,47 +13,76 @@ import java.time.temporal.ChronoUnit.DAYS
 class SubmissionWorkflowIntegrationTest : Logging {
 
 	@Test
-	fun `submission workflow from creation to reviewer assignment`() {
+	fun `submission creation to reviewer assignment`() {
 		val (author, editorialAssistant, editor, reviewer) = createUsers()
+		val submissionId = randomSubmissionId()
 
-		createSubmission(author = author).expectSubmissionCreation()
-			.inviteEditor(editor = editor, invitedBy = editorialAssistant).expectPendingEditorInvitationAndInvitationEmailBeenSent()
-			.acceptInvitation(acceptedBy = editor).expectEditorInvitationToBeAcceptedAndChaserToInvitedReviewerToBeScheduled()
-			.addReviewer(reviewer = reviewer, addedBy = editor).expectReviewerToBeAddedAndChaserToInviteReviewerToBeCancelled()
+		author.createSubmission(submissionId).expect()
+			.createdSuccessfully()
+
+		editorialAssistant.inviteEditor(editor, submissionId).expect()
+			.pendingEditorInvitation()
+
+		editor.expect()
+			.receiveEditorInvitationEmail(submissionId)
+
+		editor.acceptInvitation(submissionId).expect()
+			.editorInvitationToBeAccepted()
+
+		editor.expect()
+			.pendingTaskToInviteReviewer(submissionId)
+
+		editor.addReviewer(reviewer, submissionId).expect()
+			.reviewerToBeAdded()
+
+		editor.expect()
+			.taskDoneToInviteReviewer(submissionId)
 	}
 
 	@Test
 	fun `send a chaser email to editor when fails to invite reviewer`() {
 		val (author, editorialAssistant, editor) = createUsers()
-		val pretendThreeDaysHasPassed = now().plus(3, DAYS).plusMillis(1)
-		val submission = createSubmission(author = author).expectSubmissionCreation()
-			.assignEditor(editor = editor, invitedBy = editorialAssistant).expectEditorToBeAssignedAndChaserToInviteReviewerToBeScheduled()
+		val submissionId = randomSubmissionId()
+		val threeDaysLater = now().plus(3, DAYS).plusMillis(1)
 
-		triggerChaserEmailAsOf(chaserType = EDITOR_TO_INVITE_REVIEWER, asOf = pretendThreeDaysHasPassed)
+		author.createSubmission(submissionId).expect()
+			.createdSuccessfully()
 
-		expectChaserForEditorToInviteReviewerHasBeenSent(submission, editor)
+		editorialAssistant.assignEditor(editor, submissionId).expect()
+			.editorToBeAssigned()
+
+		editor.expect()
+			.pendingTaskToInviteReviewer(submissionId)
+
+		triggerChaserEmailAsOf(chaserType = EDITOR_TO_INVITE_REVIEWER, asOf = threeDaysLater)
+
+		expectChaserForEditorToInviteReviewerHasBeenSent(submissionId = submissionId, editor = editor)
 	}
 
 	@Test
 	fun `list of submissions`() {
 		val (author) = createUsers()
-		val submissionA = createSubmission(author = author).metadata.submissionId
-		val submissionB = createSubmission(author = author).metadata.submissionId
+		val submissionIdA = randomSubmissionId()
+		val submissionIdB = randomSubmissionId()
 
-		await().untilCallTo { fetchAllSubmissions() } matches { submissions ->
-			submissions!!.filter { it.id == submissionA || it.id == submissionB }.size == 2
-		}
+		author.createSubmission(submissionIdA)
+		author.createSubmission(submissionIdB)
+
+		expectSubmissionsToBePresent(submissionIdA, submissionIdB)
 	}
 
 	@Test
 	fun `submission history`() {
 		val (author) = createUsers()
-		val submissionId = createSubmission(author = author).metadata.submissionId
+		val submissionId = randomSubmissionId()
+
+		author.createSubmission(submissionId)
 
 		await().untilCallTo { fetchSubmissionHistory(submissionId) } matches { history ->
 			history!!.isNotEmpty() && history[0].type == "Submission Created" && history[0].description == "Submission was submitted by DanielTheAuthor Jones."
 		}
 	}
+
 
 	companion object {
 		@BeforeAll
