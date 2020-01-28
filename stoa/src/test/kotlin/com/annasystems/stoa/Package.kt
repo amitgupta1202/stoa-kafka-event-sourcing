@@ -2,7 +2,6 @@ package com.annasystems.stoa
 
 import arrow.core.Either
 import arrow.core.Option
-import arrow.core.extensions.set.foldable.exists
 import arrow.core.getOrElse
 import com.annasystems.stoa.common.*
 import com.annasystems.stoa.common.Utils.createProducer
@@ -14,9 +13,6 @@ import com.annasystems.stoa.user.dao.UserDao
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.streams.StreamsConfig
-import org.awaitility.Awaitility
-import org.awaitility.kotlin.matches
-import org.awaitility.kotlin.untilCallTo
 import org.http4k.client.OkHttp
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
@@ -26,7 +22,7 @@ import java.time.Instant
 import java.util.*
 
 private val userProducer = createProducer(Configs.bootstrapServers, Configs.Topics.userCommands)
-private val submissionChaserTriggerProducer = createProducer(Configs.bootstrapServers, Configs.Topics.submissionChaseTrigger)
+private val submissionTaskTriggerProducer = createProducer(Configs.bootstrapServers, Configs.Topics.submissionTaskTrigger)
 
 internal val userDao = UserDao(UserDao.findUserInRedis { Configs.Redis.jedisPool.resource })
 private val client: HttpHandler = OkHttp()
@@ -38,8 +34,8 @@ internal fun sendCommand(cmd: UserCommand) {
 	userProducer.send(ProducerRecord(Configs.Topics.userCommands.name, cmd.metadata.userId, cmd)).get()
 }
 
-internal fun sendChaser(asOf: Instant, chaserType: ChaserType) {
-	submissionChaserTriggerProducer.send(ProducerRecord(Configs.Topics.submissionChaseTrigger.name, asOf.toEpochMilli(), chaserType.toString())).get()
+internal fun sendTaskOverdue(asOf: Instant, taskType: TaskType) {
+	submissionTaskTriggerProducer.send(ProducerRecord(Configs.Topics.submissionTaskTrigger.name, asOf.toEpochMilli(), taskType.toString())).get()
 }
 
 internal fun fetchSubmission(submissionId: SubmissionId): Option<Submission> {

@@ -71,15 +71,15 @@ data class EditorAlreadyInvited(val submissionId: SubmissionId, val editor: Edit
 }
 
 @Serializable
-data class EditorAlreadyHasScheduledChaser(val submissionId: SubmissionId, val editor: EditorId, @Serializable(with = InstantSerializer::class) val chaseTime: Instant) : ApplicationError() {
+data class EditorAlreadyHasPendingTask(val submissionId: SubmissionId, val editor: EditorId, @Serializable(with = InstantSerializer::class) val chaseTime: Instant) : ApplicationError() {
 	override fun message(): String =
-		"Editor = $editor already has scheduled chaser for submission id = $submissionId at ${chaseTime}."
+		"Editor = $editor already has pending task for submission id = $submissionId at ${chaseTime}."
 }
 
 @Serializable
-data class EditorHasNoScheduledChaser(val submissionId: SubmissionId, val editor: EditorId, @Serializable(with = InstantSerializer::class) val chaseTime: Instant) : ApplicationError() {
+data class EditorHasNoPendingTask(val submissionId: SubmissionId, val editor: EditorId, @Serializable(with = InstantSerializer::class) val chaseTime: Instant) : ApplicationError() {
 	override fun message(): String =
-		"Editor = $editor has no scheduled chaser for submission id = $submissionId at ${chaseTime}."
+		"Editor = $editor has no pending task for submission id = $submissionId at ${chaseTime}."
 }
 
 @Serializable

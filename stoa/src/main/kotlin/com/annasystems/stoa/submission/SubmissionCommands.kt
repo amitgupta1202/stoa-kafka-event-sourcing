@@ -29,8 +29,8 @@ sealed class SubmissionCommand {
 			ACCEPT, DECLINE
 		}
 
-		enum class ChaserAction {
-			SEND, CANCEL
+		enum class TaskState {
+			OVERDUE, DONE
 		}
 	}
 }
@@ -87,17 +87,17 @@ data class RespondToEditorInvitation(
 ) : SubmissionCommand()
 
 @Serializable
-data class ScheduleEditorChaseToAddReviewer(
+data class CreateEditorTaskToAddReviewer(
 	override val metadata: Metadata,
 	val editorId: EditorId,
-	@Serializable(with = InstantSerializer::class) val chaseTime: Instant
+	@Serializable(with = InstantSerializer::class) val overdue: Instant
 ) : SubmissionCommand()
 
 @Serializable
-data class ActionEditorChaseToAddReviewer(
+data class ChangeEditorTaskToAddReviewer(
 	override val metadata: Metadata,
-	val editorId: EditorId, @Serializable(with = InstantSerializer::class) val chaseTime: Instant,
-	val action: SubmissionCommand.Companion.ChaserAction
+	val editorId: EditorId, @Serializable(with = InstantSerializer::class) val overdue: Instant,
+	val state: SubmissionCommand.Companion.TaskState
 ) : SubmissionCommand()
 
 @Serializable

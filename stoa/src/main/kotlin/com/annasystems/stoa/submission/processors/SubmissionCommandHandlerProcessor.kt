@@ -122,8 +122,8 @@ class SubmissionCommandTransformer(private val submissionStoreName: String, priv
 			inviteEditorCommandHandler = InviteEditorCommandHandler(getEditor),
 			respondToEditorInvitationCommandHandler = RespondToEditorInvitationCommandHandler(getEditor),
 			sendInviteEditorEmailCommandHandler = SendInviteEditorEmailCommandHandler(getEditor),
-			scheduleEditorChaseToAddReviewerCommandHandler = ScheduleEditorChaseToAddReviewerCommandHandler(getEditor),
-			actionEditorChaseToInviteReviewerCommandHandler = ActionEditorChaseToInviteReviewerCommandHandler(getEditor),
+			createEditorTaskToAddReviewerCommandHandler = CreateEditorTaskToAddReviewerCommandHandler(getEditor),
+			changeEditorTaskToAddReviewerCommandHandler = ChangeEditorTaskToAddReviewerCommandHandler(getEditor),
 			sendEditorChaseToAddReviewerEmailCommandHandler = SendEditorChaseToAddReviewerEmailCommandHandler(getEditor),
 			getUser = getUser,
 			getSubmission = getSubmission

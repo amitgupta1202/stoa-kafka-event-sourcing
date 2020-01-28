@@ -35,20 +35,20 @@ data class Invitation<T>(
 	}
 }
 
-enum class ChaserType {
+enum class TaskType {
 	EDITOR_TO_INVITE_REVIEWER
 }
 
 @Serializable
-data class Chaser<T>(
+data class Task<T>(
 	val user: T,
-	@Serializable(with = InstantSerializer::class) val chaseTime: Instant,
-	val chaseType: ChaserType,
-	val state: State = State.SCHEDULED
+	@Serializable(with = InstantSerializer::class) val overdue: Instant,
+	val taskType: TaskType,
+	val state: State = State.PENDING
 ) {
 	companion object {
 		enum class State {
-			SCHEDULED, SENT, CANCELLED
+			PENDING, OVERDUE, DONE
 		}
 	}
 }
@@ -62,7 +62,7 @@ data class Submission(
 	@Serializable(with = EditorOptionSerializer::class) val editor: Option<User.Editor> = None,
 	val reviewers: Set<User.Reviewer> = emptySet(),
 	val editorInvitations: Set<Invitation<User.Editor>> = emptySet(),
-	val editorChasers: Set<Chaser<User.Editor>> = emptySet(),
+	val editorTasks: Set<Task<User.Editor>> = emptySet(),
 	val emails: Set<SubmissionEmail> = emptySet(),
 	val version: Version = Version.INITIAL
 )

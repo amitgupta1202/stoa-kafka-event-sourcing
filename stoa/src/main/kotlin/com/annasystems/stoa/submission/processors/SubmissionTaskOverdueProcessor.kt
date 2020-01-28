@@ -6,7 +6,7 @@ import com.annasystems.stoa.common.StreamProcessorApp
 import com.annasystems.stoa.common.Topic
 import com.annasystems.stoa.common.Version
 import com.annasystems.stoa.submission.*
-import com.annasystems.stoa.submission.SubmissionCommand.Companion.ChaserAction.SEND
+import com.annasystems.stoa.submission.SubmissionCommand.Companion.TaskState.OVERDUE
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
@@ -15,31 +15,31 @@ import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.Produced
 import redis.clients.jedis.Jedis
 
-class SubmissionSendChaserProcessor(
+class SubmissionTaskOverdueProcessor(
 	override val bootstrapServers: String,
-	private val submissionChaseTriggerTopic: Topic<Long, String>,
+	private val submissionTaskTriggerTopic: Topic<Long, String>,
 	private val submissionCommandTopic: Topic<SubmissionId, SubmissionCommand>,
 	private val jedis: () -> Jedis) : StreamProcessorApp() {
 
-	override val appId: String = "processor-submission-send-chaser"
+	override val appId: String = "processor-submission-task-overdue"
 
 	override val topology: Topology
 		get() {
 			val builder = StreamsBuilder()
 
 			val chaseTriggerEvents =
-				with(submissionChaseTriggerTopic) {
+				with(submissionTaskTriggerTopic) {
 					builder.stream(name, Consumed.with(keySerde, valueSerde))
 				}
 
-			val submissionCommands: KStream<SubmissionId, SubmissionCommand> = chaseTriggerEvents.flatMap { chaseTime, chaserName ->
-				jedis().use { it.zrangeByScore(chaserName, 0.0, chaseTime.toDouble()) }
+			val submissionCommands: KStream<SubmissionId, SubmissionCommand> = chaseTriggerEvents.flatMap { overdue, taskName ->
+				jedis().use { it.zrangeByScore(taskName, 0.0, overdue.toDouble()) }
 					.map { Serialization.json.parse(SubmissionEvent.serializer(), it) }
 					.mapNotNull { event ->
 						when (event) {
-							is ScheduledEditorChaseToInviteReviewer -> KeyValue.pair(
+							is TaskToAddReviewerCreated -> KeyValue.pair(
 								event.metadata.submissionId,
-								ActionEditorChaseToAddReviewer(event.metadata.toCommandMetadata(), event.editorId, event.chaseTime, SEND)
+								ChangeEditorTaskToAddReviewer(event.metadata.toCommandMetadata(), event.editorId, event.chaseTime, OVERDUE)
 							)
 							else -> null
 						}

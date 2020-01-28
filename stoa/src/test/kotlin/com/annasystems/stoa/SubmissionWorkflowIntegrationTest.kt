@@ -1,7 +1,7 @@
 package com.annasystems.stoa
 
 import com.annasystems.stoa.common.Logging
-import com.annasystems.stoa.submission.ChaserType.EDITOR_TO_INVITE_REVIEWER
+import com.annasystems.stoa.submission.TaskType.EDITOR_TO_INVITE_REVIEWER
 import org.awaitility.Awaitility.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -30,13 +30,13 @@ class SubmissionWorkflowIntegrationTest : Logging {
 			.editorInvitationToBeAccepted()
 
 		editor.expect()
-			.pendingTaskToInviteReviewer(submissionId)
+			.pendingTaskToAddReviewer(submissionId)
 
 		editor.addReviewer(reviewer, submissionId).expect()
 			.reviewerToBeAdded()
 
 		editor.expect()
-			.taskDoneToInviteReviewer(submissionId)
+			.taskDoneToAddReviewer(submissionId)
 	}
 
 	@Test
@@ -52,11 +52,12 @@ class SubmissionWorkflowIntegrationTest : Logging {
 			.editorToBeAssigned()
 
 		editor.expect()
-			.pendingTaskToInviteReviewer(submissionId)
+			.pendingTaskToAddReviewer(submissionId)
 
-		triggerChaserEmailAsOf(chaserType = EDITOR_TO_INVITE_REVIEWER, asOf = threeDaysLater)
+		triggerMarkTaskOverdueAsOf(taskType = EDITOR_TO_INVITE_REVIEWER, asOf = threeDaysLater)
 
-		expectChaserForEditorToInviteReviewerHasBeenSent(submissionId = submissionId, editor = editor)
+		editor.expect()
+			.receiveChaserEmailForEditorToInviteReviewer(submissionId)
 	}
 
 	@Test
@@ -88,10 +89,8 @@ class SubmissionWorkflowIntegrationTest : Logging {
 		@BeforeAll
 		@JvmStatic
 		fun beforeAll() {
-			checkKafkaConnection().map {
-				checkHttpServerIsRunning().mapLeft {
-					App.start()
-				}
+			checkHttpServerIsRunning().mapLeft {
+				App.start()
 			}
 		}
 	}

@@ -62,13 +62,13 @@ object App {
 			Configs.Topics.submissionEvents,
 			Configs.Topics.submissionEmails
 		)
-		val submissionScheduleChaserProcessor = SubmissionScheduleChaserProcessor(
+		val submissionTaskProcessor = SubmissionTaskProcessor(
 			Configs.bootstrapServers,
 			Configs.Topics.submissionEvents
 		) { jedisPool.resource }
-		val submissionSendChaserProcessor = SubmissionSendChaserProcessor(
+		val submissionTaskOverdueProcessor = SubmissionTaskOverdueProcessor(
 			Configs.bootstrapServers,
-			Configs.Topics.submissionChaseTrigger,
+			Configs.Topics.submissionTaskTrigger,
 			Configs.Topics.submissionCommands
 		) { jedisPool.resource }
 		val submissionListProjectorProcessor = SubmissionListProjectorProcessor(
@@ -86,8 +86,8 @@ object App {
 		executor.submit { submissionProjectorProcessor.start() }
 		executor.submit { submissionCommandHandlerProcessor.start() }
 		executor.submit { submissionEmailEventProcessor.start() }
-		executor.submit { submissionScheduleChaserProcessor.start() }
-		executor.submit { submissionSendChaserProcessor.start() }
+		executor.submit { submissionTaskProcessor.start() }
+		executor.submit { submissionTaskOverdueProcessor.start() }
 		executor.submit { submissionListProjectorProcessor.start() }
 		executor.submit { submissionHistoryProjectorProcessor.start() }
 

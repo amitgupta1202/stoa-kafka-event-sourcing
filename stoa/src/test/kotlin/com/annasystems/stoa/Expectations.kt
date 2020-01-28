@@ -44,11 +44,11 @@ internal fun Expect<RespondToEditorInvitation>.editorInvitationToBeAccepted() {
 	}
 }
 
-internal fun  Expect<User.Editor>.pendingTaskToInviteReviewer(submissionId: SubmissionId) {
+internal fun  Expect<User.Editor>.pendingTaskToAddReviewer(submissionId: SubmissionId) {
 	Awaitility.await().untilCallTo { fetchSubmission(submissionId) } matches { maybeSubmission ->
 		maybeSubmission!!.isDefined() && maybeSubmission.forall { submission ->
 			submission.editor.isDefined() && submission.editor.get().id == command.id &&
-					submission.editorChasers.exists { it.user.id == command.id && it.state == Chaser.Companion.State.SCHEDULED && it.chaseType == ChaserType.EDITOR_TO_INVITE_REVIEWER }
+					submission.editorTasks.exists { it.user.id == command.id && it.state == Task.Companion.State.PENDING && it.taskType == TaskType.EDITOR_TO_INVITE_REVIEWER }
 		}
 	}
 }
@@ -61,10 +61,10 @@ internal fun Expect<AddReviewer>.reviewerToBeAdded() {
 	}
 }
 
-internal fun Expect<User.Editor>.taskDoneToInviteReviewer(submissionId: SubmissionId) {
+internal fun Expect<User.Editor>.taskDoneToAddReviewer(submissionId: SubmissionId) {
 	Awaitility.await().untilCallTo { fetchSubmission(submissionId) } matches { maybeSubmission ->
 		maybeSubmission!!.isDefined() && maybeSubmission.forall { submission ->
-			submission.editorChasers.exists { it.user.id == command.id && it.state == Chaser.Companion.State.CANCELLED && it.chaseType == ChaserType.EDITOR_TO_INVITE_REVIEWER }
+			submission.editorTasks.exists { it.user.id == command.id && it.state == Task.Companion.State.DONE && it.taskType == TaskType.EDITOR_TO_INVITE_REVIEWER }
 		}
 	}
 }
@@ -73,16 +73,16 @@ internal fun Expect<AssignEditor>.editorToBeAssigned() {
 	Awaitility.await().untilCallTo { fetchSubmission(command.metadata.submissionId) } matches { maybeSubmission ->
 		maybeSubmission!!.isDefined() && maybeSubmission.forall { submission ->
 			submission.editor.isDefined() && submission.editor.get().id == command.editorId &&
-					submission.editorChasers.exists { it.user.id == command.editorId && it.state == Chaser.Companion.State.SCHEDULED && it.chaseType == ChaserType.EDITOR_TO_INVITE_REVIEWER }
+					submission.editorTasks.exists { it.user.id == command.editorId && it.state == Task.Companion.State.PENDING && it.taskType == TaskType.EDITOR_TO_INVITE_REVIEWER }
 		}
 	}
 }
 
 
-internal fun expectChaserForEditorToInviteReviewerHasBeenSent(submissionId: SubmissionId, editor: User.Editor) {
+internal fun Expect<User.Editor>.receiveChaserEmailForEditorToInviteReviewer(submissionId: SubmissionId) {
 	Awaitility.await().untilCallTo { fetchSubmission(submissionId) } matches { maybeSubmission ->
 		maybeSubmission!!.forall { submission ->
-			submission.editorChasers.exists { it.user.id == editor.id && it.state == Chaser.Companion.State.SENT && it.chaseType == ChaserType.EDITOR_TO_INVITE_REVIEWER } &&
+			submission.editorTasks.exists { it.user.id == command.id && it.state == Task.Companion.State.OVERDUE && it.taskType == TaskType.EDITOR_TO_INVITE_REVIEWER } &&
 					submission.emails.exists { it.submissionId == submission.id && it.emailType == SubmissionEmailType.CHASE_EDITOR_TO_INVITE_REVIEWER }
 		}
 	}

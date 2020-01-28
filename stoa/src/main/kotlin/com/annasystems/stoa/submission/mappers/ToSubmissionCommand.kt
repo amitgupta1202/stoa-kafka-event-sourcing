@@ -6,8 +6,8 @@ import arrow.core.none
 import arrow.core.some
 import com.annasystems.stoa.common.Mapper
 import com.annasystems.stoa.submission.*
-import com.annasystems.stoa.submission.SubmissionCommand.Companion.ChaserAction.CANCEL
-import com.annasystems.stoa.submission.SubmissionEvent.Companion.ChaserAction.SENT
+import com.annasystems.stoa.submission.SubmissionCommand.Companion.TaskState.DONE
+import com.annasystems.stoa.submission.SubmissionEvent.Companion.TaskState.OVERDUE
 import com.annasystems.stoa.submission.SubmissionEvent.Companion.EditorInvitationResponse.ACCEPTED
 import java.time.temporal.ChronoUnit
 
@@ -26,17 +26,17 @@ class ToSubmissionCommand(private val submission: Submission) : Mapper<Submissio
 
 			is EditorAssigned -> {
 				val chaseTime = from.metadata.timestamp.plus(3, ChronoUnit.DAYS)
-				ScheduleEditorChaseToAddReviewer(from.metadata.toCommandMetadata(submission.version), from.editorId, chaseTime).some()
+				CreateEditorTaskToAddReviewer(from.metadata.toCommandMetadata(submission.version), from.editorId, chaseTime).some()
 			}
 
 			is ReviewerAdded -> Option.fx {
 				val (editor) = submission.editor
-				val (chaser) = Option.fromNullable(submission.editorChasers.find { chaser -> chaser.user.id == editor.id })
-				ActionEditorChaseToAddReviewer(from.metadata.toCommandMetadata(submission.version), editor.id, chaser.chaseTime, CANCEL)
+				val (task) = Option.fromNullable(submission.editorTasks.find { task -> task.user.id == editor.id })
+				ChangeEditorTaskToAddReviewer(from.metadata.toCommandMetadata(submission.version), editor.id, task.overdue, DONE)
 			}
 
-			is EditorChaseToInviteReviewerActionReceived ->
-				if (from.action == SENT) SendEditorChaseToAddReviewerEmail(from.metadata.toCommandMetadata(submission.version), from.editorId).some() else none()
+			is TaskToAddReviewerChanged ->
+				if (from.state == OVERDUE) SendEditorChaseToAddReviewerEmail(from.metadata.toCommandMetadata(submission.version), from.editorId).some() else none()
 
 			else -> none()
 		}

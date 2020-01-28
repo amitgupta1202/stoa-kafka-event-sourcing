@@ -12,7 +12,6 @@ import com.annasystems.stoa.user.ReviewerId
 import com.annasystems.stoa.user.User
 import com.annasystems.stoa.user.dao.UserDao
 
-
 class ToSubmissionHistoryTypeAndDescription(private val userDao: UserDao) : Mapper<SubmissionEvent, TypeAndDescription> {
 	override fun apply(from: SubmissionEvent): TypeAndDescription =
 		when (from) {
@@ -24,9 +23,9 @@ class ToSubmissionHistoryTypeAndDescription(private val userDao: UserDao) : Mapp
 			is EditorInvited -> "Editor Invited" to "Editor ${from.editorId.name()} was invited."
 			is EditorInvitationResponseReceived -> "Editor Invitation Response Received" to "Editor ${from.editorId.name()} response received - ${from.response}."
 			is InviteEditorEmailSent -> "Invite Editor Email Sent" to "Invited email was sent to editor ${from.editorId.name()}."
-			is ScheduledEditorChaseToInviteReviewer -> "Scheduled Editor Chase To Invite Reviewer" to "Scheduled chaser to be sent to editor ${from.editorId.name()} on ${from.chaseTime}."
-			is EditorChaseToInviteReviewerActionReceived -> "Editor Chase To Invite Reviewer Action Received" to "Scheduled chaser for editor ${from.editorId.name()} was ${from.action}."
-			is EditorChaseToInviteReviewerEmailSent -> "Editor Chase To Invite Reviewer Email Sent" to "Scheduled chaser email was sent to editor ${from.editorId.name()}."
+			is TaskToAddReviewerCreated -> "Create Editor Task To Add Reviewer" to "Created task to to add reviewer for editor ${from.editorId.name()} overdue on ${from.chaseTime}."
+			is TaskToAddReviewerChanged -> "Editor Task To Add Reviewer Action Changed" to "Task to add reviewer for editor ${from.editorId.name()} was ${from.state}."
+			is EditorChaseToAddReviewerEmailSent -> "Editor Chase To Add Reviewer Email Sent" to "Chaser email was sent to editor ${from.editorId.name()}."
 		}
 
 	private fun <T : User> Either<ApplicationError, T>.name(default: String) = this.map { "${it.name.firstName} ${it.name.lastName}" }.getOrElse { default }

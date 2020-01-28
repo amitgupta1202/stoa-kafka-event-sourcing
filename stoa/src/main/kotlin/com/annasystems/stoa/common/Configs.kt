@@ -93,8 +93,8 @@ object Configs {
 			cleanupPolicy = Some(CleanupPolicy.Compact)
 		)
 
-		val submissionChaseTrigger: Topic<Long, String> = Topic(
-			"topic-submission-chase-triggers",
+		val submissionTaskTrigger: Topic<Long, String> = Topic(
+			"topic-submission-task-triggers",
 			Serdes.Long(),
 			Serdes.String(),
 			cleanupPolicy = Some(CleanupPolicy.Compact)
@@ -141,7 +141,7 @@ object Configs {
 				submissionCommands,
 				submissionCommandResults,
 				submissionModels,
-				submissionChaseTrigger,
+				submissionTaskTrigger,
 				submissionEmails,
 				userEvents,
 				userCommands,

@@ -5,9 +5,10 @@ import arrow.core.some
 import com.annasystems.stoa.common.RequestId
 import com.annasystems.stoa.common.Version
 import com.annasystems.stoa.common.serializers.InstantSerializer
-import com.annasystems.stoa.submission.Chaser.Companion.State.*
-import com.annasystems.stoa.submission.ChaserType.EDITOR_TO_INVITE_REVIEWER
+import com.annasystems.stoa.submission.Task.Companion.State.*
+import com.annasystems.stoa.submission.TaskType.EDITOR_TO_INVITE_REVIEWER
 import com.annasystems.stoa.submission.Invitation.Companion.State.*
+import com.annasystems.stoa.submission.Invitation.Companion.State.PENDING
 import com.annasystems.stoa.submission.SubmissionEvent.Companion.EditorInvitationResponse
 import com.annasystems.stoa.submission.SubmissionEvent.Companion.Metadata
 import com.annasystems.stoa.user.AuthorId
@@ -36,8 +37,8 @@ sealed class SubmissionEvent {
 			ACCEPTED, DECLINED
 		}
 
-		enum class ChaserAction {
-			SENT, CANCELLED
+		enum class TaskState {
+			OVERDUE, DONE
 		}
 	}
 }
@@ -48,7 +49,7 @@ interface EmailEvent {
 
 interface ScheduleChaseEvent {
 	val chaseTime: Instant
-	val chaserType: ChaserType
+	val taskType: TaskType
 }
 
 @Serializable
@@ -137,46 +138,41 @@ data class InviteEditorEmailSent(
 }
 
 @Serializable
-data class ScheduledEditorChaseToInviteReviewer(
+data class TaskToAddReviewerCreated(
 	override val metadata: Metadata,
 	val editorId: EditorId,
 	@Serializable(with = InstantSerializer::class) override val chaseTime: Instant
 ) : SubmissionEvent(), ScheduleChaseEvent {
 
-	override val chaserType = EDITOR_TO_INVITE_REVIEWER
+	override val taskType = EDITOR_TO_INVITE_REVIEWER
 
 	fun apply(submission: Submission, editor: Editor): Submission {
-		val remainingChasers = submission.editorChasers.filterNot { it.user == editor && it.chaseTime == chaseTime }.toSet()
-		val chasers = Chaser(editor, chaseTime, chaserType, SCHEDULED)
-		return submission.copy(editorChasers = remainingChasers + chasers, version = metadata.submissionVersion)
+		val remainingTasks = submission.editorTasks.filterNot { it.user == editor && it.overdue == chaseTime }.toSet()
+		val tasks = Task(editor, chaseTime, taskType, Task.Companion.State.PENDING)
+		return submission.copy(editorTasks = remainingTasks + tasks, version = metadata.submissionVersion)
 	}
 }
 
 @Serializable
-data class EditorChaseToInviteReviewerActionReceived(
+data class TaskToAddReviewerChanged(
 	override val metadata: Metadata,
 	val editorId: EditorId,
-	@Serializable(with = InstantSerializer::class) val chaseTime: Instant,
-	val chaserType: ChaserType,
-	val action: SubmissionEvent.Companion.ChaserAction
+	@Serializable(with = InstantSerializer::class) val overdue: Instant,
+	val taskType: TaskType,
+	val state: SubmissionEvent.Companion.TaskState
 ) : SubmissionEvent() {
 	fun apply(submission: Submission, editor: Editor): Submission {
-		val remainingChasers = submission.editorChasers.filterNot { it.user == editor && it.chaseTime == chaseTime }.toSet()
-		val chasers = when (action) {
-			SubmissionEvent.Companion.ChaserAction.SENT -> Chaser(editor, chaseTime, chaserType, SENT)
-			SubmissionEvent.Companion.ChaserAction.CANCELLED -> Chaser(
-				editor,
-				chaseTime,
-				chaserType,
-				CANCELLED
-			)
+		val remainingTasks = submission.editorTasks.filterNot { it.user == editor && it.overdue == overdue }.toSet()
+		val tasks = when (state) {
+			SubmissionEvent.Companion.TaskState.OVERDUE -> Task(editor, overdue, taskType, OVERDUE)
+			SubmissionEvent.Companion.TaskState.DONE -> Task(editor, overdue, taskType, DONE)
 		}
-		return submission.copy(editorChasers = remainingChasers + chasers, version = metadata.submissionVersion)
+		return submission.copy(editorTasks = remainingTasks + tasks, version = metadata.submissionVersion)
 	}
 }
 
 @Serializable
-data class EditorChaseToInviteReviewerEmailSent(
+data class EditorChaseToAddReviewerEmailSent(
 	override val metadata: Metadata,
 	val editorId: EditorId,
 	override val email: SubmissionEmail

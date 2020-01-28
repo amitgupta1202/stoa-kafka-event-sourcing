@@ -11,7 +11,7 @@ import com.annasystems.stoa.submission.dao.Rdbms.EDITOR_ID
 import com.annasystems.stoa.submission.dao.Rdbms.REVIEWER_ID
 import com.annasystems.stoa.submission.dao.Rdbms.STATE
 import com.annasystems.stoa.submission.dao.Rdbms.SUBMISSIONS
-import com.annasystems.stoa.submission.dao.Rdbms.SUBMISSION_EDITOR_CHASERS
+import com.annasystems.stoa.submission.dao.Rdbms.SUBMISSION_EDITOR_TASKS
 import com.annasystems.stoa.submission.dao.Rdbms.SUBMISSION_EDITOR_INVITATIONS
 import com.annasystems.stoa.submission.dao.Rdbms.SUBMISSION_ID
 import com.annasystems.stoa.submission.dao.Rdbms.SUBMISSION_REVIEWERS
@@ -59,7 +59,7 @@ class SubmissionListProjectorProcessor(override val bootstrapServers: String, pr
 				writeSubmissionRecord(dslContext, submission)
 				writeSubmissionReviewerRecords(dslContext, submission)
 				writeSubmissionEditorInvitationRecords(dslContext, submission)
-				writeSubmissionChaserRecords(dslContext, submission)
+				writeSubmissionTaskRecords(dslContext, submission)
 				connection.commit()
 			} catch (t: Throwable) {
 				connection.rollback()
@@ -67,15 +67,15 @@ class SubmissionListProjectorProcessor(override val bootstrapServers: String, pr
 		}
 	}
 
-	private fun writeSubmissionChaserRecords(dslContext: DSLContext, submission: SubmissionRecord) {
+	private fun writeSubmissionTaskRecords(dslContext: DSLContext, submission: SubmissionRecord) {
 		dslContext
-			.deleteFrom(SUBMISSION_EDITOR_CHASERS)
+			.deleteFrom(SUBMISSION_EDITOR_TASKS)
 			.where(SUBMISSION_ID.eq(submission.submissionId))
 			.execute()
 
-		submission.editorChasers.forEach {
+		submission.editorTasks.forEach {
 			dslContext
-				.insertInto(SUBMISSION_EDITOR_CHASERS, SUBMISSION_ID, EDITOR_ID, CHASE_TIME, STATE)
+				.insertInto(SUBMISSION_EDITOR_TASKS, SUBMISSION_ID, EDITOR_ID, CHASE_TIME, STATE)
 				.values(it.submissionId, it.editorId, it.chaseTime, it.state)
 				.execute()
 		}
@@ -121,11 +121,11 @@ class SubmissionListProjectorProcessor(override val bootstrapServers: String, pr
 		val editor = editor.map { it.id.raw }.getOrElse { null }
 		val reviewerRecords = reviewers.map { SubmissionReviewerRecord(id.raw, it.id.raw) }
 		val editorInvitationRecords = editorInvitations.map { SubmissionEditorInvitationRecord(id.raw, it.user.id.raw, it.state.toString()) }
-		val editorChaserRecords = editorChasers.map {
-			val chaseTime = Timestamp.valueOf(LocalDateTime.ofInstant(it.chaseTime, ZoneOffset.UTC))
-			SubmissionEditorChaserRecord(id.raw,  it.user.id.raw, chaseTime, it.state.toString())
+		val editorTaskRecords = editorTasks.map {
+			val overdue = Timestamp.valueOf(LocalDateTime.ofInstant(it.overdue, ZoneOffset.UTC))
+			SubmissionEditorTaskRecord(id.raw,  it.user.id.raw, overdue, it.state.toString())
 		}
-		return SubmissionRecord(id.raw, title.raw, abstract.raw, version.num, editor, reviewerRecords, editorInvitationRecords, editorChaserRecords)
+		return SubmissionRecord(id.raw, title.raw, abstract.raw, version.num, editor, reviewerRecords, editorInvitationRecords, editorTaskRecords)
 	}
 
 	data class SubmissionRecord(
@@ -136,10 +136,10 @@ class SubmissionListProjectorProcessor(override val bootstrapServers: String, pr
 		val editor: UUID?,
 		val reviewers: List<SubmissionReviewerRecord>,
 		val editorInvitations: List<SubmissionEditorInvitationRecord>,
-		val editorChasers: List<SubmissionEditorChaserRecord>
+		val editorTasks: List<SubmissionEditorTaskRecord>
 
 	)
 	data class SubmissionReviewerRecord(val submissionId: UUID, val reviewerId: UUID)
 	data class SubmissionEditorInvitationRecord(val submissionId: UUID, val editorId: UUID, val state: String)
-	data class SubmissionEditorChaserRecord(val submissionId: UUID, val editorId: UUID, val chaseTime: Timestamp, val state: String)
+	data class SubmissionEditorTaskRecord(val submissionId: UUID, val editorId: UUID, val chaseTime: Timestamp, val state: String)
 }

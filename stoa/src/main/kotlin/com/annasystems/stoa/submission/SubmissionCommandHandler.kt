@@ -19,8 +19,8 @@ class SubmissionCommandHandler(
 	private val inviteEditorCommandHandler: InviteEditorCommandHandler,
 	private val respondToEditorInvitationCommandHandler: RespondToEditorInvitationCommandHandler,
 	private val sendInviteEditorEmailCommandHandler: SendInviteEditorEmailCommandHandler,
-	private val scheduleEditorChaseToAddReviewerCommandHandler: ScheduleEditorChaseToAddReviewerCommandHandler,
-	private val actionEditorChaseToInviteReviewerCommandHandler: ActionEditorChaseToInviteReviewerCommandHandler,
+	private val createEditorTaskToAddReviewerCommandHandler: CreateEditorTaskToAddReviewerCommandHandler,
+	private val changeEditorTaskToAddReviewerCommandHandler: ChangeEditorTaskToAddReviewerCommandHandler,
 	private val sendEditorChaseToAddReviewerEmailCommandHandler: SendEditorChaseToAddReviewerEmailCommandHandler,
 	private val getUser: GetUser,
 	private val getSubmission: GetSubmission
@@ -55,8 +55,8 @@ class SubmissionCommandHandler(
 						is InviteEditor -> inviteEditorCommandHandler.handle(cmd, submission)
 						is RespondToEditorInvitation -> respondToEditorInvitationCommandHandler.handle(cmd, submission)
 						is SendInviteEditorEmail -> sendInviteEditorEmailCommandHandler.handle(cmd, submission)
-						is ScheduleEditorChaseToAddReviewer -> scheduleEditorChaseToAddReviewerCommandHandler.handle(cmd, submission)
-						is ActionEditorChaseToAddReviewer -> actionEditorChaseToInviteReviewerCommandHandler.handle(cmd, submission)
+						is CreateEditorTaskToAddReviewer -> createEditorTaskToAddReviewerCommandHandler.handle(cmd, submission)
+						is ChangeEditorTaskToAddReviewer -> changeEditorTaskToAddReviewerCommandHandler.handle(cmd, submission)
 						is SendEditorChaseToAddReviewerEmail -> sendEditorChaseToAddReviewerEmailCommandHandler.handle(cmd, submission)
 						is CreateSubmission -> UnexpectedError().left()
 					}

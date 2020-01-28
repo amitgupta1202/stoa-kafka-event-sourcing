@@ -94,8 +94,8 @@ internal fun User.EditorialAssistant.assignEditor(editor: User.Editor, submissio
 	return sendCommand(command)
 }
 
-internal fun triggerChaserEmailAsOf(chaserType: ChaserType, asOf: Instant) {
-	sendChaser(asOf, chaserType)
+internal fun triggerMarkTaskOverdueAsOf(taskType: TaskType, asOf: Instant) {
+	sendTaskOverdue(asOf, taskType)
 }
 
 internal fun createUsers() = Tuple4(createAuthor(), createEditorialAssistant(), createEditor(), createReviewer())

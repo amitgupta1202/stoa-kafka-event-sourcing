@@ -13,9 +13,9 @@ import com.annasystems.stoa.user.GetEditor
 
 class SendEditorChaseToAddReviewerEmailCommandHandler(
 	private val getEditor: GetEditor
-) : CommandHandler<SendEditorChaseToAddReviewerEmail, EditorChaseToInviteReviewerEmailSent, Submission> {
+) : CommandHandler<SendEditorChaseToAddReviewerEmail, EditorChaseToAddReviewerEmailSent, Submission> {
 
-	override fun handle(cmd: SendEditorChaseToAddReviewerEmail, existing: Option<Submission>): Either<ApplicationError, CommandResult<EditorChaseToInviteReviewerEmailSent, Submission>> =
+	override fun handle(cmd: SendEditorChaseToAddReviewerEmail, existing: Option<Submission>): Either<ApplicationError, CommandResult<EditorChaseToAddReviewerEmailSent, Submission>> =
 		Either.fx {
 			val (submission) = existing.toEither { SubmissionDoesNotExists(cmd.metadata.submissionId) }
 			val (editor) = getEditor(cmd.editorId)
@@ -28,7 +28,7 @@ class SendEditorChaseToAddReviewerEmailCommandHandler(
 				timestamp = cmd.metadata.timestamp,
 				emailType = SubmissionEmailType.CHASE_EDITOR_TO_INVITE_REVIEWER
 			)
-			val (submissionEvent) = EditorChaseToInviteReviewerEmailSent(cmd.metadata.toEventMetadata(submission.version), cmd.editorId, email).right()
+			val (submissionEvent) = EditorChaseToAddReviewerEmailSent(cmd.metadata.toEventMetadata(submission.version), cmd.editorId, email).right()
 			CommandResult(submissionEvent, submissionEvent.apply(submission))
 		}
 }

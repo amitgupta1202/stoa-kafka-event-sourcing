@@ -11,13 +11,13 @@ import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.kstream.Consumed
 import redis.clients.jedis.Jedis
 
-class SubmissionScheduleChaserProcessor(
+class SubmissionTaskProcessor(
 	override val bootstrapServers: String,
 	private val submissionEventTopic: Topic<SubmissionId, SubmissionEvent>,
 	private val jedis: () -> Jedis
 ) : StreamProcessorApp() {
 
-	override val appId: String = "processor-submission-schedule-chaser"
+	override val appId: String = "processor-submission-task"
 
 	override val topology: Topology
 		get() {
@@ -32,7 +32,7 @@ class SubmissionScheduleChaserProcessor(
 				if (event is ScheduleChaseEvent) {
 					val json = Serialization.json.stringify(SubmissionEvent.serializer(), event)
 					val score = event.chaseTime.toEpochMilli().toDouble()
-					jedis().use { it.zadd(event.chaserType.toString(), score, json) }
+					jedis().use { it.zadd(event.taskType.toString(), score, json) }
 				}
 			}
 			return builder.build()
