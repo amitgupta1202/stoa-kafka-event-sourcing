@@ -11,6 +11,7 @@ import org.awaitility.Awaitility
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import java.time.Instant
+import java.time.temporal.ChronoUnit.DAYS
 import java.util.*
 
 internal fun User.Author.createSubmission(submissionId: SubmissionId): CreateSubmission {
@@ -39,7 +40,7 @@ internal fun User.EditorialAssistant.inviteEditor(editor: User.Editor, submissio
 	val metadata = SubmissionCommand.Companion.Metadata(
 		requestId,
 		id,
-		Instant.EPOCH,
+		Instant.EPOCH.plus(1, DAYS),
 		submissionId,
 		version
 	)
@@ -53,7 +54,7 @@ internal fun User.Editor.acceptInvitation(submissionId: SubmissionId): RespondTo
 	val metadata = SubmissionCommand.Companion.Metadata(
 		RequestId.generate(),
 		id,
-		Instant.EPOCH,
+		Instant.EPOCH.plus(2, DAYS),
 		submissionId,
 		version
 	)
@@ -71,7 +72,7 @@ internal fun User.Editor.addReviewer(reviewer: User.Reviewer, submissionId: Subm
 	val metadata = SubmissionCommand.Companion.Metadata(
 		RequestId.generate(),
 		id,
-		Instant.EPOCH,
+		Instant.EPOCH.plus(3, DAYS),
 		submissionId,
 		version
 	)
@@ -86,7 +87,7 @@ internal fun User.EditorialAssistant.assignEditor(editor: User.Editor, submissio
 	val metadata = SubmissionCommand.Companion.Metadata(
 		requestId,
 		id,
-		Instant.EPOCH,
+		Instant.EPOCH.plus(1, DAYS),
 		submissionId,
 		version
 	)
