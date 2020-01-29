@@ -28,7 +28,7 @@ class ChangeEditorTaskToAddReviewerCommandHandler(
 						cmd.metadata.toEventMetadata(submission.version),
 						cmd.editorId,
 						cmd.overdue,
-						TaskType.EDITOR_TO_INVITE_REVIEWER,
+						TaskType.EDITOR_TO_ADD_REVIEWER,
 						eventAction
 					)
 				},

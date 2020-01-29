@@ -36,7 +36,7 @@ data class Invitation<T>(
 }
 
 enum class TaskType {
-	EDITOR_TO_INVITE_REVIEWER
+	EDITOR_TO_ADD_REVIEWER
 }
 
 @Serializable

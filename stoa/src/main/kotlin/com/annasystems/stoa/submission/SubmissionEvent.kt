@@ -6,7 +6,7 @@ import com.annasystems.stoa.common.RequestId
 import com.annasystems.stoa.common.Version
 import com.annasystems.stoa.common.serializers.InstantSerializer
 import com.annasystems.stoa.submission.Task.Companion.State.*
-import com.annasystems.stoa.submission.TaskType.EDITOR_TO_INVITE_REVIEWER
+import com.annasystems.stoa.submission.TaskType.EDITOR_TO_ADD_REVIEWER
 import com.annasystems.stoa.submission.Invitation.Companion.State.*
 import com.annasystems.stoa.submission.Invitation.Companion.State.PENDING
 import com.annasystems.stoa.submission.SubmissionEvent.Companion.EditorInvitationResponse
@@ -144,7 +144,7 @@ data class TaskToAddReviewerCreated(
 	@Serializable(with = InstantSerializer::class) override val chaseTime: Instant
 ) : SubmissionEvent(), ScheduleChaseEvent {
 
-	override val taskType = EDITOR_TO_INVITE_REVIEWER
+	override val taskType = EDITOR_TO_ADD_REVIEWER
 
 	fun apply(submission: Submission, editor: Editor): Submission {
 		val remainingTasks = submission.editorTasks.filterNot { it.user == editor && it.overdue == chaseTime }.toSet()

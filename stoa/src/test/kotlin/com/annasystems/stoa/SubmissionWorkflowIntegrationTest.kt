@@ -1,7 +1,7 @@
 package com.annasystems.stoa
 
 import com.annasystems.stoa.common.Logging
-import com.annasystems.stoa.submission.TaskType.EDITOR_TO_INVITE_REVIEWER
+import com.annasystems.stoa.submission.TaskType.EDITOR_TO_ADD_REVIEWER
 import org.awaitility.Awaitility.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -54,10 +54,10 @@ class SubmissionWorkflowIntegrationTest : Logging {
 		editor.expect()
 			.pendingTaskToAddReviewer(submissionId)
 
-		triggerMarkTaskOverdueAsOf(taskType = EDITOR_TO_INVITE_REVIEWER, asOf = threeDaysLater)
+		triggerMarkTaskOverdueAsOf(taskType = EDITOR_TO_ADD_REVIEWER, asOf = threeDaysLater)
 
 		editor.expect()
-			.receiveChaserEmailForEditorToInviteReviewer(submissionId)
+			.receiveChaserEmailForEditorToAddReviewer(submissionId)
 	}
 
 	@Test
